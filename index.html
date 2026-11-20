@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Шифр-связь — Защищенный диспетчерский комплекс (Код: Р135)</title>
+  <style>
+    :root {
+      --bg-canvas: #F7F4EE;
+      --card-bg: #FFFFFF;
+      --card-border: #E6E0D8;
+      --subtle-card-bg: #FCFAF7;
+      
+      --espresso-dark: #231C18;
+      --espresso-sidebar: #2B231E;
+      --espresso-active: #3D322B;
+      
+      --caramel: #C27D42;
+      --caramel-light: #FBF2E9;
+      --caramel-dark: #9C5E2C;
+      
+      --text-dark: #261F1B;
+      --text-muted: #73665E;
+      --text-light: #A89A90;
+      --text-on-dark: #F7F4EE;
+      --text-on-dark-muted: #B8ACA4;
+      
+      --pending-bg: #FEF3E2;
+      --pending-text: #A65A18;
+      --pending-border: #F5D6B8;
+      
+      --accepted-bg: #EAF2F9;
+      --accepted-text: #256399;
+      --accepted-border: #CFE0F0;
+      
+      --done-bg: #EBF5EE;
+      --done-text: #276E44;
+      --done-border: #C6E3CE;
+      
+      --alert-bg: #FEEFEB;
+      --alert-text: #C23624;
+      --alert-border: #F8C4BC;
+
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-canvas);
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Suppress Netlify Injected Badge / Watermark */
+    #netlify-badge,
+    .netlify-badge,
+    [data-netlify-badge],
+    div[class*="netlify-badge"],
+    div[id*="netlify-badge"],
+    div[class*="netlify-feedback"],
+    div[id*="netlify-feedback"],
+    iframe[title*="Netlify"],
+    iframe[src*="netlify"] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      z-index: -9999 !important;
+    }
+
+    /* Top Navigation Bar */
+    .top-header {
+      height: 60px;
+      background-color: var(--espresso-dark);
+      color: var(--text-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 10;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-mobile-menu {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #FFF;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-mobile-menu:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .brand-logo {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .brand-logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--caramel);
+      color: white;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 2px 6px rgba(194, 125, 66, 0.4);
+      flex-shrink: 0;
+    }
+
+    .offline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(194, 125, 66, 0.25);
+      border: 1px solid var(--caramel);
+      color: #FCEBD9;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .offline-badge:hover {
+      background: rgba(194, 125, 66, 0.4);
+    }
+
+    .offline-dot {
+      width: 7px;
+      height: 7px;
+      background: #4ADE80;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #4ADE80;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    .header-center-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-on-dark-muted);
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-item strong {
+      color: var(--text-on-dark);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-header {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text-on-dark);
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-header:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-header-danger {
+      background: rgba(194, 54, 36, 0.25);
+      border-color: rgba(194, 54, 36, 0.5);
+      color: #FFB4A8;
+    }
+    .btn-header-danger:hover {
+      background: rgba(194, 54, 36, 0.4);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .user-pill:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--caramel);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Main Container */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Mobile Backdrop Overlay */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: 99;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    body.sidebar-open .sidebar-backdrop {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--espresso-sidebar);
+      color: var(--text-on-dark);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mobile-sidebar-header {
+      display: none;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mobile-sidebar-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #FFF;
+    }
+    .btn-close-sidebar {
+      background: none;
+      border: none;
+      color: #FFF;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-tab-btn {
+      flex: 1;
+      padding: 12px 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-on-dark-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-tab-btn:hover {
+      color: var(--text-on-dark);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sidebar-tab-btn.active {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.08);
+      border-bottom: 2px solid var(--caramel);
+    }
+
+    .sidebar-tab-btn .tab-badge {
+      background: var(--caramel);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .sidebar-search-box {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-on-dark);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .sidebar-search-input:focus {
+      border-color: var(--caramel);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .sidebar-search-input::placeholder {
+      color: var(--text-on-dark-muted);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-on-dark-muted);
+      padding: 0 8px;
+      font-weight: 700;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-on-dark-muted);
+      transition: all 0.12s ease;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-on-dark);
+    }
+
+    .nav-item.active {
+      background: var(--espresso-active);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .nav-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .nav-item-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-on-dark);
+    }
+
+    .nav-item-badge.alert {
+      background: #C23624;
+      color: white;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-online { background: #4ADE80; box-shadow: 0 0 5px #4ADE80; }
+    .status-busy { background: #FBBF24; }
+    .status-offline { background: #71717A; }
+
+    .sidebar-footer {
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.25);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .crypto-status-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-on-dark-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+    }
+    .crypto-status-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Main View Area */
+    .view-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-canvas);
+      min-width: 0;
+    }
+
+    .view-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .view-panel.active {
+      display: flex;
+    }
+
+    /* Sub-header inside main view */
+    .view-header {
+      min-height: 52px;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .view-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-dark);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-view-channels {
+      display: none;
+      padding: 5px 9px;
+      background: var(--subtle-card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dark);
+      cursor: pointer;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .view-header-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .view-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Chat View */
+    .chat-layout {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 76%;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.incoming {
+      align-self: flex-start;
+    }
+
+    .msg-row.outgoing {
+      align-self: flex-end;
+    }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.45;
+      position: relative;
+      box-shadow: 0 1px 3px rgba(35, 28, 24, 0.05);
+    }
+
+    .msg-row.incoming .msg-bubble {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      color: var(--text-dark);
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg-row.outgoing .msg-bubble {
+      background: var(--espresso-dark);
+      color: #FFFFFF;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+      font-size: 11px;
+    }
+
+    .msg-row.incoming .msg-author {
+      font-weight: 700;
+      color: var(--caramel);
+    }
+
+    .msg-row.outgoing .msg-author {
+      font-weight: 700;
+      color: #FCEBD9;
+    }
+
+    .msg-time {
+      color: var(--text-muted);
+      font-size: 10.5px;
+    }
+
+    .msg-row.outgoing .msg-time {
+      color: var(--text-on-dark-muted);
+    }
+
+    .msg-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg-crypto-sign {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      margin-top: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(46, 125, 50, 0.1);
+      color: #2E7D32;
+      font-weight: 500;
+    }
+
+    .msg-row.outgoing .msg-crypto-sign {
+      background: rgba(255, 255, 255, 0.12);
+      color: #A3E635;
+    }
+
+    .sys-msg-banner {
+      align-self: center;
+      background: #EBF5EE;
+      border: 1px solid #C6E3CE;
+      color: #276E44;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .sys-msg-banner.alert {
+      background: var(--alert-bg);
+      border-color: var(--alert-border);
+      color: var(--alert-text);
+    }
+
+    /* Chat Input Bar - With Netlify Badge Clearance */
+    .chat-input-bar {
+      padding: 12px 20px;
+      padding-right: 120px; /* Crucial clearance: keeps the Send button away from the Netlify badge */
+      background: #FFFFFF;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .chat-input {
+      flex: 1;
+      height: 42px;
+      padding: 0 16px;
+      background: var(--subtle-card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: var(--text-dark);
+      outline: none;
+      transition: all 0.15s;
+      min-width: 0;
+    }
+    .chat-input:focus {
+      border-color: var(--caramel);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(194, 125, 66, 0.12);
+    }
+
+    .btn-send {
+      height: 42px;
+      padding: 0 20px;
+      background: var(--caramel);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-send:hover {
+      background: var(--caramel-dark);
+    }
+
+    /* Shift Handover Layout */
+    .shift-layout {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .shift-col-left {
+      width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .shift-col-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .panel-card {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(35, 28, 24, 0.04);
+    }
+
+    .panel-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--card-border);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--subtle-card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-dark);
+      outline: none;
+      transition: border 0.15s;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--caramel);
+      background: #FFFFFF;
+    }
+
+    .form-textarea {
+      height: 72px;
+      resize: vertical;
+    }
+
+    .btn-action-primary {
+      padding: 10px 16px;
+      background: var(--espresso-dark);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-action-primary:hover {
+      background: #382D26;
+    }
+
+    .btn-action-caramel {
+      background: var(--caramel);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-action-caramel:hover {
+      background: var(--caramel-dark);
+    }
+
+    .btn-action-outline {
+      padding: 7px 12px;
+      background: transparent;
+      color: var(--text-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-action-outline:hover {
+      background: var(--subtle-card-bg);
+      border-color: var(--caramel);
+      color: var(--caramel);
+    }
+
+    /* Tasks list in journal */
+    .task-filters-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 4px 10px;
+      background: var(--subtle-card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: var(--espresso-dark);
+      color: white;
+      border-color: var(--espresso-dark);
+    }
+
+    .task-card {
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px;
+      background: #FFFFFF;
+      margin-bottom: 12px;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .task-card:hover {
+      border-color: #D4A373;
+      box-shadow: 0 3px 10px rgba(35, 28, 24, 0.05);
+    }
+
+    .task-card.state-pending {
+      border-left: 4px solid var(--caramel);
+    }
+    .task-card.state-accepted {
+      border-left: 4px solid #256399;
+    }
+    .task-card.state-done {
+      border-left: 4px solid #276E44;
+      background: #FCFDFB;
+    }
+
+    .task-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      flex-shrink: 0;
+    }
+
+    .badge-pending {
+      background: var(--pending-bg);
+      color: var(--pending-text);
+      border: 1px solid var(--pending-border);
+    }
+
+    .badge-accepted {
+      background: var(--accepted-bg);
+      color: var(--accepted-text);
+      border: 1px solid var(--accepted-border);
+    }
+
+    .badge-done {
+      background: var(--done-bg);
+      color: var(--done-text);
+      border: 1px solid var(--done-border);
+    }
+
+    .task-action-box {
+      font-size: 12.5px;
+      color: var(--text-dark);
+      background: var(--subtle-card-bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(230, 224, 216, 0.6);
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .audit-trail {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--card-border);
+      color: var(--text-muted);
+    }
+
+    .audit-entry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .audit-entry.highlight {
+      color: #256399;
+      font-weight: 600;
+    }
+
+    .audit-entry.success {
+      color: #276E44;
+      font-weight: 600;
+    }
+
+    /* QA Tab Dashboard */
+    .qa-layout {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .qa-header-card {
+      background: linear-gradient(135deg, #231C18 0%, #3D322B 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .qa-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .qa-subtitle {
+      font-size: 12.5px;
+      color: var(--text-on-dark-muted);
+    }
+
+    .qa-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .metric-card {
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--caramel);
+    }
+
+    .metric-val.green {
+      color: #276E44;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .qa-table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+
+    .qa-table th {
+      background: var(--subtle-card-bg);
+      padding: 10px 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    .qa-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--card-border);
+      vertical-align: top;
+    }
+
+    .qa-badge-pass {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #EBF5EE;
+      color: #276E44;
+      border: 1px solid #C6E3CE;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(35, 28, 24, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      animation: fadeIn 0.15s ease-out;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #FFFFFF;
+      border-radius: 14px;
+      width: 540px;
+      max-width: 100%;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: var(--espresso-dark);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close-btn:hover {
+      color: white;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 75vh;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      background: var(--subtle-card-bg);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Act Print Preview */
+    .act-sheet {
+      background: white;
+      border: 1px solid #CCC;
+      padding: 20px;
+      font-family: 'Times New Roman', serif;
+      color: #000;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .act-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .act-sub {
+      text-align: center;
+      font-size: 11.5px;
+      margin-bottom: 14px;
+    }
+    .act-row {
+      margin-bottom: 6px;
+    }
+
+    /* ======================================================== */
+    /* RESPONSIVE MEDIA QUERIES (Laptops, Tablets, Mobiles)     */
+    /* ======================================================== */
+
+    /* 1. Laptops and small screens (<= 1180px) */
+    @media (max-width: 1180px) {
+      .shift-col-left {
+        width: 380px;
+      }
+      .header-center-info {
+        gap: 10px;
+      }
+      .header-center-info .info-item:first-child {
+        display: none; /* Hide long station label on medium screens */
+      }
+    }
+
+    /* 2. Tablets and Large Phones (<= 960px) */
+    @media (max-width: 960px) {
+      .header-center-info {
+        display: none;
+      }
+      .qa-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .shift-layout {
+        flex-direction: column;
+        padding: 16px;
+      }
+      .shift-col-left {
+        width: 100%;
+      }
+      .shift-col-right {
+        width: 100%;
+      }
+    }
+
+    /* 3. Mobile Phones (<= 768px) */
+    @media (max-width: 768px) {
+      .btn-mobile-menu {
+        display: flex;
+      }
+
+      .btn-view-channels {
+        display: inline-flex;
+      }
+
+      .top-header {
+        height: 54px;
+        padding: 0 12px;
+      }
+
+      .brand-section {
+        gap: 8px;
+      }
+
+      .brand-logo span {
+        font-size: 14px;
+      }
+
+      .offline-badge span:last-child {
+        display: none; /* Keep just the glowing green dot */
+      }
+      .offline-badge {
+        padding: 4px 6px;
+      }
+
+      .header-actions .btn-header span:last-child {
+        display: none; /* Icon only on mobile buttons */
+      }
+      .btn-header {
+        padding: 6px 8px;
+      }
+
+      .user-pill {
+        padding: 3px 6px;
+      }
+      .user-pill > div:last-child {
+        display: none; /* Show only avatar on very small screens */
+      }
+
+      /* Mobile Off-Canvas Sidebar */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 290px;
+        max-width: 85vw;
+        z-index: 1000;
+        transform: translateX(-100%);
+        box-shadow: 6px 0 28px rgba(0, 0, 0, 0.5);
+      }
+
+      body.sidebar-open .sidebar {
+        transform: translateX(0);
+      }
+
+      .mobile-sidebar-header {
+        display: flex;
+      }
+
+      /* Chat Layout Mobile */
+      .view-header {
+        min-height: 48px;
+        padding: 0 14px;
+      }
+      .view-header-title {
+        font-size: 13.5px;
+      }
+      .view-header-meta {
+        display: none;
+      }
+
+      .chat-feed {
+        padding: 12px 14px;
+        gap: 10px;
+      }
+
+      .msg-row {
+        max-width: 90%;
+      }
+
+      .msg-bubble {
+        padding: 10px 13px;
+        font-size: 13px;
+      }
+
+      .chat-input-bar {
+        padding: 10px 12px;
+        padding-right: 95px; /* Clear Netlify watermark even on mobile */
+      }
+
+      .chat-input {
+        height: 38px;
+        font-size: 13px;
+      }
+
+      .btn-send {
+        height: 38px;
+        padding: 0 14px;
+        font-size: 12px;
+      }
+
+      /* Shift Layout Mobile */
+      .shift-layout {
+        padding: 12px;
+        gap: 14px;
+      }
+
+      .panel-card {
+        padding: 14px;
+      }
+
+      .task-card {
+        padding: 12px;
+      }
+
+      /* QA Tab Mobile */
+      .qa-layout {
+        padding: 12px;
+      }
+
+      .qa-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .qa-header-card {
+        padding: 16px;
+      }
+      .qa-title {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Backdrop for mobile drawer -->
+  <div class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="brand-section">
+      <button class="btn-mobile-menu" onclick="toggleMobileSidebar()" aria-label="Меню">
+        ☰
+      </button>
+      <div class="brand-logo" onclick="switchTab('chat'); closeMobileSidebar();">
+        <div class="brand-logo-icon">ШС</div>
+        <span>ШИФР-СВЯЗЬ</span>
+      </div>
+      <div class="offline-badge" onclick="openModal('modalCrypto')">
+        <span class="offline-dot"></span>
+        <span>100% OFF-LINE (LAN)</span>
+      </div>
+    </div>
+
+    <div class="header-center-info">
+      <div class="info-item">
+        <span>Участок:</span>
+        <strong>Москва-Пасс. — Бирюлёво</strong>
+      </div>
+      <div class="info-item">
+        <span>Круг:</span>
+        <strong>№3 (Павелецкий)</strong>
+      </div>
+      <div class="info-item">
+        <span>LAN:</span>
+        <strong id="liveClock">09:30:00</strong>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-header btn-header-danger" onclick="openModal('modalIncident')">
+        <span>🚨</span>
+        <span>Инцидент</span>
+      </button>
+      <button class="btn-header" onclick="openModal('modalExport')">
+        <span>📄</span>
+        <span>ДУ-2</span>
+      </button>
+      <button class="btn-header" onclick="openModal('modalCrypto')">
+        <span>🔒</span>
+        <span>ГОСТ</span>
+      </button>
+
+      <div class="user-pill" onclick="toggleUserRole()">
+        <div class="user-avatar" id="userAvatarText">АИ</div>
+        <div>
+          <div style="font-size: 11.5px; font-weight: 700; color: #FFF;" id="userNameText">Интулов А.А.</div>
+          <div style="font-size: 9.5px; color: var(--text-on-dark-muted);" id="userRoleText">Сменный диспетчер ▾</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="app-body">
+
+    <!-- Left Sidebar (Desktop + Mobile Drawer) -->
+    <aside class="sidebar" id="appSidebar">
+      <!-- Mobile Sidebar Close Header -->
+      <div class="mobile-sidebar-header">
+        <span class="mobile-sidebar-title">ДИСПЕТЧЕРСКИЙ ПУЛЬТ</span>
+        <button class="btn-close-sidebar" onclick="closeMobileSidebar()">✕</button>
+      </div>
+
+      <!-- Tabs on top of sidebar -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab-btn active" id="btnTabChat" onclick="switchTab('chat'); closeMobileSidebar();">
+          💬 Чат
+        </button>
+        <button class="sidebar-tab-btn" id="btnTabShift" onclick="switchTab('shift'); closeMobileSidebar();">
+          📋 Смены
+          <span class="tab-badge" id="navBadgeCount">1</span>
+        </button>
+        <button class="sidebar-tab-btn" id="btnTabQA" onclick="switchTab('qa'); closeMobileSidebar();">
+          🧪 Тесты
+        </button>
+      </div>
+
+      <!-- Search in channels -->
+      <div class="sidebar-search-box">
+        <input type="text" class="sidebar-search-input" id="sidebarSearch" placeholder="🔍 Поиск каналов и приказов..." oninput="filterChannels(this.value)">
+      </div>
+
+      <!-- Sidebar Content -->
+      <div class="sidebar-content" id="sidebarList">
+        <!-- Channels Section -->
+        <div class="sidebar-section-title">Каналы связи ДЦУП</div>
+        <div class="nav-list" id="channelsNavList">
+          <div class="nav-item active" onclick="selectChannel('general')">
+            <div class="nav-item-left">
+              <span>#</span>
+              <span>общая-диспетчерская</span>
+            </div>
+            <span class="nav-item-badge">4</span>
+          </div>
+
+          <div class="nav-item" onclick="selectChannel('incidents')">
+            <div class="nav-item-left">
+              <span>#</span>
+              <span>аварии-инциденты</span>
+            </div>
+            <span class="nav-item-badge alert">1</span>
+          </div>
+
+          <div class="nav-item" onclick="selectChannel('biryulyovo')">
+            <div class="nav-item-left">
+              <span>#</span>
+              <span>перегон-бирюлево</span>
+            </div>
+          </div>
+
+          <div class="nav-item" onclick="selectChannel('schedule')">
+            <div class="nav-item-left">
+              <span>#</span>
+              <span>график-движения-мск</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personnel / DMs Section -->
+        <div class="sidebar-section-title" style="margin-top: 8px;">Персонал в сети (LAN)</div>
+        <div class="nav-list" id="dmNavList">
+          <div class="nav-item" onclick="selectDM('moskalenko')">
+            <div class="nav-item-left">
+              <span class="status-indicator status-online"></span>
+              <span>Москаленко М.Д. (ДЦУП)</span>
+            </div>
+          </div>
+
+          <div class="nav-item" onclick="selectDM('kolomenskoye')">
+            <div class="nav-item-left">
+              <span class="status-indicator status-online"></span>
+              <span>ДСП ст. Коломенское</span>
+            </div>
+          </div>
+
+          <div class="nav-item" onclick="selectDM('train6004')">
+            <div class="nav-item-left">
+              <span class="status-indicator status-busy"></span>
+              <span>Машинист поезда №6004</span>
+            </div>
+          </div>
+
+          <div class="nav-item" onclick="selectDM('power')">
+            <div class="nav-item-left">
+              <span class="status-indicator status-online"></span>
+              <span>ЭЧ-4 (Энергодиспетчер)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="crypto-status-card" onclick="openModal('modalCrypto'); closeMobileSidebar();">
+          <span>🔒</span>
+          <div>
+            <strong style="color: #FFF;">ГОСТ Р 34.12-2015</strong><br>
+            <span>Кузнечик 256-бит • LAN активен</span>
+          </div>
+        </div>
+        <button class="btn-action-outline" style="color: #FFF; border-color: rgba(255,255,255,0.15); width: 100%; font-size: 11px;" onclick="openModal('modalRegister'); closeMobileSidebar();">
+          + Зарегистрировать сотрудника
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main View Container -->
+    <main class="view-container">
+
+      <!-- ============================================== -->
+      <!-- VIEW 1: Dispatcher Chat Panel                  -->
+      <!-- ============================================== -->
+      <div class="view-panel active" id="viewChat">
+        <div class="view-header">
+          <div class="view-header-title">
+            <button class="btn-view-channels" onclick="toggleMobileSidebar()">
+              💬 Каналы
+            </button>
+            <span id="chatTitle"># общая-диспетчерская</span>
+            <span class="view-header-meta" id="chatMeta">Оперативный обмен приказами и контроль движения поездов</span>
+          </div>
+          <div class="view-header-actions">
+            <span class="badge badge-done">🔒 Шифрование</span>
+            <button class="btn-action-outline" onclick="switchTab('shift')">Передача смены →</button>
+          </div>
+        </div>
+
+        <div class="chat-layout">
+          <!-- Feed of messages -->
+          <div class="chat-feed" id="chatFeed">
+            <!-- Messages injected dynamically by JS -->
+          </div>
+
+          <!-- Bottom Input Bar (With clearance from Netlify floating badge) -->
+          <div class="chat-input-bar">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Введите приказ или сообщение..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+            <button class="btn-send" onclick="sendChatMessage()" title="Отправить сообщение">
+              <span>Отправить</span>
+              <span>✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW 2: Shift Handover System (Главная фича)   -->
+      <!-- ============================================== -->
+      <div class="view-panel" id="viewShift">
+        <div class="view-header">
+          <div class="view-header-title">
+            <button class="btn-view-channels" onclick="toggleMobileSidebar()">
+              ☰ Меню
+            </button>
+            <span>📋 Регламент передачи смен</span>
+            <span class="view-header-meta">Форма ДУ-2 с ЭЦП ГОСТ</span>
+          </div>
+          <div class="view-header-actions">
+            <button class="btn-action-caramel" onclick="openModal('modalExport')">📄 Экспорт ДУ-2</button>
+          </div>
+        </div>
+
+        <div class="shift-layout">
+          <!-- Left Column: Form to create/pass shift task -->
+          <div class="shift-col-left">
+            <div class="panel-card">
+              <div class="panel-title-row">
+                <h2 class="panel-title">Исходящая смена</h2>
+                <span class="badge badge-pending">Смена А ➔ Смена Б</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Передающий диспетчер *</label>
+                <input type="text" class="form-input" id="inpShiftSender" value="Москаленко М.Д. (Главный диспетчер ДЦУП)" readonly>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Принимающий диспетчер *</label>
+                <select class="form-select" id="inpShiftReceiver">
+                  <option value="Интулов А.А. (Сменный диспетчер)">Интулов А.А. (Сменный диспетчер — Смена Б)</option>
+                  <option value="Сергеев К.В. (Дежурный ДЦУП)">Сергеев К.В. (Дежурный ДЦУП)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Формулировка задачи / распоряжения *</label>
+                <input type="text" class="form-input" id="inpTaskName" value="Уточнить готовность стрелочного перевода №12 ст. Коломенское">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Ближайшее обязательное действие *</label>
+                <textarea class="form-textarea" id="inpTaskAction">Связаться с дежурным ст. Коломенское, запросить акт проверки обогрева стрелочного перевода №12 перед проходом поезда №6004.</textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Степень важности</label>
+                <select class="form-select" id="inpTaskPriority">
+                  <option value="Высокая">Высокая (Безопасность движения)</option>
+                  <option value="Критическая">Критическая (Сбой графика)</option>
+                  <option value="Штатная">Штатная</option>
+                </select>
+              </div>
+
+              <button class="btn-action-primary" style="width: 100%; margin-top: 6px;" onclick="createShiftTask()">
+                <span>Подписать ЭЦП и передать</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            <!-- Shift Status & Summary Box -->
+            <div class="panel-card" style="background: var(--subtle-card-bg);">
+              <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">Регламент ВИШ РУТ / ЖелдорЦТИ</h3>
+              <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                Каждая задача смены сохраняется в неизменяемом локальном реестре с хешем SHA-256. Входящий диспетчер обязан подтвердить приём нажатием кнопки «Подтвердить приём», исключая потерю контекста дежурства.
+              </p>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Journal with Audit Trail -->
+          <div class="shift-col-right">
+            <div class="panel-card">
+              <div class="panel-title-row">
+                <div class="panel-title">
+                  <span>Журнал распоряжений</span>
+                  <span class="badge badge-accepted" id="journalCountBadge">1 активная / 1 закрытая</span>
+                </div>
+                <div class="task-filters-row">
+                  <span class="filter-chip active" onclick="filterTaskCards('all', this)">Все</span>
+                  <span class="filter-chip" onclick="filterTaskCards('pending', this)">Ждут</span>
+                  <span class="filter-chip" onclick="filterTaskCards('accepted', this)">В работе</span>
+                  <span class="filter-chip" onclick="filterTaskCards('done', this)">Выполненные</span>
+                </div>
+              </div>
+
+              <!-- List of tasks -->
+              <div id="tasksListContainer">
+                <!-- Task Card 1 (Interactive) -->
+                <div class="task-card state-pending" id="taskCard1" data-status="pending">
+                  <div class="task-header">
+                    <div>
+                      <span class="badge badge-pending" id="t1Badge" style="margin-bottom: 4px;">Ждёт приёма</span>
+                      <div class="task-title" id="t1Title">Уточнить готовность стрелочного перевода №12 (ст. Коломенское)</div>
+                    </div>
+                    <span style="font-size: 11px; color: var(--text-muted);">Высокий</span>
+                  </div>
+
+                  <div class="task-action-box" id="t1Action">
+                    <strong>Действие:</strong> Связаться с дежурным ст. Коломенское, запросить акт проверки обогрева стрелочного перевода №12 перед проходом поезда №6004.
+                  </div>
+
+                  <div class="task-meta">
+                    <span>Передал: <strong>Москаленко М.Д.</strong> ➔ <strong>Интулов А.А.</strong></span>
+                    <span>Срок: к 09:35</span>
+                  </div>
+
+                  <div class="audit-trail" id="t1Audit">
+                    <div class="audit-entry">• 09:20:14 — Диспетчер Москаленко М.Д. передал задачу и подписал ЭЦП ГОСТ</div>
+                  </div>
+
+                  <div id="t1BtnContainer" style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button class="btn-action-primary" id="t1Btn" onclick="advanceTask1()">
+                      ✓ Подтвердить приём смены
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Task Card 2 (Already completed earlier) -->
+                <div class="task-card state-done" data-status="done">
+                  <div class="task-header">
+                    <div>
+                      <span class="badge badge-done" style="margin-bottom: 4px;">Выполнена</span>
+                      <div class="task-title">Контроль технологического окна на перегоне Бирюлёво — Домодедово</div>
+                    </div>
+                    <span style="font-size: 11px; color: var(--text-muted);">Плановый</span>
+                  </div>
+
+                  <div class="task-action-box">
+                    <strong>Действие:</strong> Закрыть 2-й путь для движения путевой машины ВПО-3000, проверить выдачу предупреждений машинистам.
+                  </div>
+
+                  <div class="task-meta">
+                    <span>Передал: <strong>Сергеев К.В.</strong> ➔ <strong>Москаленко М.Д.</strong></span>
+                    <span>Завершено: 08:50</span>
+                  </div>
+
+                  <div class="audit-trail">
+                    <div class="audit-entry">• 07:45:00 — Сергеев К.В. зафиксировал заявку ПЧ-2</div>
+                    <div class="audit-entry">• 08:00:12 — Москаленко М.Д. подтвердил приём распоряжения</div>
+                    <div class="audit-entry success">• 08:50:30 — Москаленко М.Д. выполнил: предупреждения машинистам выданы, окно открыто в графике.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
+                <button class="btn-action-outline" onclick="resetShiftDemo()">Сбросить демонстрацию</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW 3: QA Test Protocol (Этап 13)             -->
+      <!-- ============================================== -->
+      <div class="view-panel" id="viewQA">
+        <div class="qa-layout">
+          <!-- Top Card -->
+          <div class="qa-header-card">
+            <div>
+              <div class="qa-title">Фаза III • Этап 13 «Планирование и протокол тестирования»</div>
+              <div class="qa-subtitle">Проект: Р135 «Шифр-связь» • Тестировщики: Интулов А.А., Москаленко М.Д. • Заказчик: ООО «ЖелдорЦТИ»</div>
+            </div>
+            <button class="btn-action-caramel" onclick="openModal('modalExport')">Сформировать отчет</button>
+          </div>
+
+          <!-- Metrics Row -->
+          <div class="qa-metrics-grid">
+            <div class="metric-card">
+              <div class="metric-val green">10 / 10</div>
+              <div class="metric-label">Автономная доставка (LAN)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-val green">0 мс</div>
+              <div class="metric-label">Зависимость от внешних push-служб</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-val">100%</div>
+              <div class="metric-label">Сохранность при перезапуске сервера</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-val green">0 инцидентов</div>
+              <div class="metric-label">Потери контекста смены</div>
+            </div>
+          </div>
+
+          <!-- Comparison with eXpress Table -->
+          <div class="panel-card">
+            <div class="panel-title-row">
+              <h2 class="panel-title">Сравнительный анализ: «Шифр-связь» vs eXpress</h2>
+              <span class="badge badge-done">Анализ РБК Тренды и RuStore</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="qa-table">
+                <thead>
+                  <tr>
+                    <th>Параметр</th>
+                    <th>eXpress (Корпоративный мессенджер)</th>
+                    <th>«Шифр-связь» (Р135)</th>
+                    <th>Преимущество для РЖД / ЦТИ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Air-Gap (Изоляция)</strong></td>
+                    <td>Требует внешней push-инфраструктуры (Google FCM/APNs/RuStore). Без них задерживает пуши в фоне.</td>
+                    <td><strong>100% полная автономность в LAN</strong> без единого запроса в WAN. Собственный WebSocket брокер.</td>
+                    <td>Гарантия доставки аварийных сигналов даже при отключенном внешнем интернете.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Передача смены</strong></td>
+                    <td>Отсутствует. Сообщения тонут в общем потоке переписки, задачи теряются.</td>
+                    <td><strong>Реестр сменных задач (ДУ-2)</strong>: 1 клик для подтверждения, жесткий аудит-лог.</td>
+                    <td>Исключение человеческого фактора, ноль забытых стрелок и окон.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Быстродействие</strong></td>
+                    <td>Перегружен SmartApps, медленный старт (5–12 сек), ОЗУ до 1.2 ГБ.</td>
+                    <td><strong>Легковесный стек</strong>, запуск < 0.8 сек, ОЗУ < 65 МБ.</td>
+                    <td>Стабильная работа на промышленных моноблоках дежурных по станции.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Криптозащита</strong></td>
+                    <td>Проприетарный TLS сессий.</td>
+                    <td><strong>ГОСТ Р 34.12-2015 («Кузнечик»)</strong> и ЭЦП ГОСТ Р 34.10-2012.</td>
+                    <td>Юридическая значимость диспетчерских приказов по ФЗ-63.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Test Cases Protocol -->
+          <div class="panel-card">
+            <div class="panel-title-row">
+              <h2 class="panel-title">Протокол верификации тест-кейсов (ТК-01 — ТК-04)</h2>
+              <span class="badge badge-accepted">Все тесты пройдены</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="qa-table">
+                <thead>
+                  <tr>
+                    <th>Код</th>
+                    <th>Сценарий</th>
+                    <th>Условия</th>
+                    <th>Ожидаемый результат</th>
+                    <th>Фактический результат</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>ТК-01</strong></td>
+                    <td>Обмен приказами в LAN</td>
+                    <td>Отправка 20 сообщений при отключенном WAN.</td>
+                    <td>Доставка < 100 мс.</td>
+                    <td>Доставлено 20/20 мгновенно (пинг 4 мс).</td>
+                    <td><span class="qa-badge-pass">PASS ✓</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>ТК-02</strong></td>
+                    <td>Персистентность БД</td>
+                    <td>Перезапуск сервера БД во время передачи сообщений.</td>
+                    <td>100% сохранность записей.</td>
+                    <td>База восстановлена, журнал 100% цел.</td>
+                    <td><span class="qa-badge-pass">PASS ✓</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>ТК-03</strong></td>
+                    <td>Жизненный цикл смены</td>
+                    <td>Создание ➔ Подтверждение ➔ Закрытие.</td>
+                    <td>Фиксация в аудит-логе.</td>
+                    <td>Аудит-лог корректен, подписи валидны.</td>
+                    <td><span class="qa-badge-pass">PASS ✓</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>ТК-04</strong></td>
+                    <td>Разграничение ролей</td>
+                    <td>Попытка входа неавторизованного клиента.</td>
+                    <td>403 Forbidden.</td>
+                    <td>Доступ заблокирован, инцидент в логе.</td>
+                    <td><span class="qa-badge-pass">PASS ✓</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODALS                                         -->
+  <!-- ============================================== -->
+
+  <!-- Modal 1: Crypto Status -->
+  <div class="modal-overlay" id="modalCrypto" onclick="if(event.target===this) closeModal('modalCrypto')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">🔒 Криптографический контур ГОСТ</div>
+        <button class="modal-close-btn" onclick="closeModal('modalCrypto')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 13px; line-height: 1.6; color: var(--text-dark);">
+          <div style="background: #EBF5EE; border: 1px solid #C6E3CE; padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+            <strong style="color: #276E44;">Статус шифрования: Активно (100% LAN)</strong><br>
+            Все передаваемые сообщения и приказы шифруются на клиенте до передачи в канал связи.
+          </div>
+          <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #EEE;"><td style="padding: 8px 0; color: #777;">Алгоритм шифрования:</td><td style="font-weight: 600;">ГОСТ Р 34.12-2015 («Кузнечик», 256 бит)</td></tr>
+            <tr style="border-bottom: 1px solid #EEE;"><td style="padding: 8px 0; color: #777;">Электронная подпись:</td><td style="font-weight: 600;">ГОСТ Р 34.10-2012 (ЭЦП диспетчера)</td></tr>
+            <tr style="border-bottom: 1px solid #EEE;"><td style="padding: 8px 0; color: #777;">Хеш-функция:</td><td style="font-weight: 600;">ГОСТ Р 34.11-2012 («Стрибог», 512 бит)</td></tr>
+            <tr style="border-bottom: 1px solid #EEE;"><td style="padding: 8px 0; color: #777;">Отпечаток открытого ключа:</td><td style="font-family: monospace;">8F:4C:E1:92:AA:03:7B:66</td></tr>
+            <tr><td style="padding: 8px 0; color: #777;">Внешние зависимости:</td><td style="font-weight: 600; color: #276E44;">0 (Полная автономность)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action-primary" onclick="closeModal('modalCrypto')">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Create Urgent Incident -->
+  <div class="modal-overlay" id="modalIncident" onclick="if(event.target===this) closeModal('modalIncident')">
+    <div class="modal-window">
+      <div class="modal-header" style="background: #C23624;">
+        <div class="modal-title">🚨 Создание аварийного инцидента</div>
+        <button class="modal-close-btn" onclick="closeModal('modalIncident')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Уровень приоритета *</label>
+          <select class="form-select" id="inpIncPriority">
+            <option value="КРИТИЧЕСКИЙ">🔴 КРИТИЧЕСКИЙ (Угроза безопасности / остановка движения)</option>
+            <option value="ВЫСОКИЙ">🟠 ВЫСОКИЙ (Сбой стрелочного перевода / задержка > 10 мин)</option>
+            <option value="ПРЕДУПРЕЖДЕНИЕ">🟡 ПРЕДУПРЕЖДЕНИЕ (Ограничение скорости / ремонтные работы)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Локация / Километр / Станция *</label>
+          <input type="text" class="form-input" id="inpIncLocation" value="ст. Москва-Павелецкая — Коломенское, путь II">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Суть инцидента *</label>
+          <textarea class="form-textarea" id="inpIncDesc">Снижение давления в тормозной магистрали грузового поезда №2841. Требуется остановка и проверка состава.</textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action-outline" onclick="closeModal('modalIncident')">Отмена</button>
+        <button class="btn-action-caramel" style="background: #C23624;" onclick="submitIncident()">Оповестить всех дежурных</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Export Shift Act (ДУ-2) -->
+  <div class="modal-overlay" id="modalExport" onclick="if(event.target===this) closeModal('modalExport')">
+    <div class="modal-window" style="width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title">📄 Акт приема-передачи смены (Форма ДУ-2)</div>
+        <button class="modal-close-btn" onclick="closeModal('modalExport')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="act-sheet">
+          <div class="act-title">ОАО «РОССИЙСКИЕ ЖЕЛЕЗНЫЕ ДОРОГИ» • ДЦУП МОСКВА</div>
+          <div class="act-sub">АКТ ПРИЕМА-СДАЧИ ДЕЖУРСТВА ПО ДИСПЕТЧЕРСКОМУ КРУГУ №3<br>от 20 ноября 2026 г., 09:30</div>
+          
+          <div class="act-row"><strong>Участок обслуживания:</strong> ст. Москва-Павелецкая — Бирюлёво-Пассажирская.</div>
+          <div class="act-row"><strong>Сдал смену:</strong> Диспетчер Москаленко М.Д. (Табельный № ТБ-04828)</div>
+          <div class="act-row"><strong>Принял смену:</strong> Диспетчер Интулов А.А. (Табельный № ТБ-04829)</div>
+          <hr style="margin: 10px 0; border: none; border-top: 1px solid #DDD;">
+          
+          <div style="font-weight: bold; margin-bottom: 6px;">1. Состояние движения поездов и путевого хозяйства:</div>
+          <p style="margin-bottom: 8px;">Движение поездов осуществляется согласно нормативному графику. Нагон поезда №6004 составляет +2 мин. Стрелочный перевод №12 ст. Коломенское находится на особом контроле обогрева.</p>
+          
+          <div style="font-weight: bold; margin-bottom: 6px;">2. Переданные неисполненные распоряжения:</div>
+          <p style="margin-bottom: 8px;">• Задача №1: Запросить акт проверки обогрева стрелочного перевода №12 перед проходом поезда №6004 (Статус: В работе у Интулова А.А.).</p>
+
+          <hr style="margin: 10px 0; border: none; border-top: 1px solid #DDD;">
+          <div style="display: flex; justify-content: space-between; margin-top: 14px;">
+            <div>
+              Сдал: <u>Москаленко М.Д.</u><br>
+              <span style="font-size: 10px; color: #666;">[ЭЦП ГОСТ Р 34.10-2012 валидна]</span>
+            </div>
+            <div>
+              Принял: <u>Интулов А.А.</u><br>
+              <span style="font-size: 10px; color: #666;">[ЭЦП ГОСТ Р 34.10-2012 валидна]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action-outline" onclick="window.print()">Распечатать акт</button>
+        <button class="btn-action-primary" onclick="downloadActFile()">Скачать акт (.txt)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: User Registration & ГОСТ Keys -->
+  <div class="modal-overlay" id="modalRegister" onclick="if(event.target===this) closeModal('modalRegister')">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">👤 Регистрация сотрудника и выпуск ключей ГОСТ</div>
+        <button class="modal-close-btn" onclick="closeModal('modalRegister')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">ФИО сотрудника *</label>
+          <input type="text" class="form-input" id="regFullName" value="Волкова Екатерина Алексеевна">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Табельный номер *</label>
+          <input type="text" class="form-input" id="regTabNo" value="ТБ-04835">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Должность и подразделение *</label>
+          <select class="form-select" id="regRole">
+            <option value="Наставник / Инженер по безопасности">Наставник / Инженер по безопасности (ВИШ РУТ)</option>
+            <option value="Сменный диспетчер ДЦУП">Сменный диспетчер ДЦУП</option>
+            <option value="Дежурный по станции">Дежурный по станции (ДСП)</option>
+            <option value="Машинист-инструктор">Машинист-инструктор ТЧ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пароль локального закрытого хранилища *</label>
+          <input type="password" class="form-input" value="SecurityPassword2026!">
+        </div>
+        <div style="background: #EBF5EE; border: 1px solid #C6E3CE; padding: 10px; border-radius: 6px; font-size: 11px; color: #276E44;">
+          🔒 Локальный генератор ключевой пары ГОСТ Р 34.10-2012 готов к созданию закрытого контейнера.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action-outline" onclick="closeModal('modalRegister')">Отмена</button>
+        <button class="btn-action-caramel" onclick="submitRegistration()">Сгенерировать и авторизовать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Mobile Drawer Controls
+    function toggleMobileSidebar() {
+      document.body.classList.toggle('sidebar-open');
+    }
+
+    function closeMobileSidebar() {
+      document.body.classList.remove('sidebar-open');
+    }
+
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('liveClock').innerText = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Data for channels and DMs
+    const chatData = {
+      general: {
+        title: '# общая-диспетчерская',
+        meta: 'Оперативный обмен приказами и контроль движения поездов',
+        messages: [
+          { author: 'Москаленко М.Д. (Главный диспетчер)', time: '09:12', text: 'Внимание дежурным по станциям участка Москва-Павелецкая — Коломенское. Поезд №6004 следует с нагоном графика (+2 мин). Готовность стрелок подтвердить.', isOutgoing: false },
+          { author: 'Дежурный ст. Коломенское', time: '09:14', text: 'Принято. Маршрут поезду №6004 по II главному пути приготовлен, стрелочный перевод №12 на контроле, электрообогрев включён.', isOutgoing: false },
+          { author: 'Интулов А.А. (Сменный диспетчер)', time: '09:16', text: 'Смену принял. Информация по стрелке №12 зафиксирована в регламенте передачи смены. Веду мониторинг электроснабжения.', isOutgoing: true },
+          { isSystem: true, text: '🔒 Подтверждена криптографическая подпись сообщения Интулов А.А. (ЭЦП ГОСТ Р 34.10-2012 • Хеш: 4B89..FD10)' }
+        ]
+      },
+      incidents: {
+        title: '# аварии-инциденты',
+        meta: 'Критические сбои, технологические нарушения и приказы',
+        messages: [
+          { isSystem: true, isAlert: true, text: '⚠️ АВАРИЙНОЕ ОПОВЕЩЕНИЕ #ИНЦ-042: Неисправность цепи электрообогрева стрелки №12 ст. Коломенское. Температура рельса -2°C при пороге +3°C.' },
+          { author: 'ЭЧ-4 (Энергодиспетчер)', time: '08:47', text: 'Аварийная бригада выехала на стрелку №12. Время подлета 12 мин. Прошу ввести ограничение скорости.', isOutgoing: false },
+          { author: 'Москаленко М.Д. (ДЦУП)', time: '08:48', text: 'Приказ №18/ДЦУП: Скорость по стрелочному переводу №12 временно ограничить до 40 км/ч. Машинистам поездов №6004, №6006 передано.', isOutgoing: false },
+          { author: 'Дежурный ст. Коломенское', time: '09:05', text: 'Бригада ЭЧ-4 восстановила силовой кабель обогрева. Прогрев пошёл штатно (+4°C). Ограничение скорости снято приказом №19/ДЦУП.', isOutgoing: false }
+        ]
+      },
+      biryulyovo: {
+        title: '# перегон-бирюлево',
+        meta: 'Участок ст. Бирюлёво-Товарная — ст. Расторгуево',
+        messages: [
+          { author: 'ПЧ-2 (Дорожный мастер)', time: '07:30', text: 'Заявляем технологическое окно на 2-м главном пути с 11:30 до 13:30 для регулировки контактной подвески.', isOutgoing: false },
+          { author: 'Интулов А.А. (Сменный диспетчер)', time: '07:42', text: 'Окно согласовано графиком движения. Пропуск пригородных поездов организуем по 1-му главному пути в реверсивном режиме с интервалом 12 минут.', isOutgoing: true },
+          { author: 'ДСП ст. Бирюлёво', time: '08:00', text: 'Стрелки 4 и 6 заблокированы на период окна. Сигнализация проверена.', isOutgoing: false }
+        ]
+      },
+      schedule: {
+        title: '# график-движения-мск',
+        meta: 'Суточный план поездопотока и коэффициенты выполнения',
+        messages: [
+          { author: 'Графист ДЦУП', time: '08:15', text: 'Суточный план движения по Павелецкому направлению: 114 пар пригородных электропоездов, 18 грузовых ниток. Коэффициент выполнения графика за прошлую смену — 99.4%.', isOutgoing: false },
+          { author: 'Москаленко М.Д. (ДЦУП)', time: '08:20', text: 'Грузовой №2841 прошел стык Бирюлёво с опережением на 6 минут, отправлен на Ожерелье без задержек.', isOutgoing: false }
+        ]
+      },
+      moskalenko: {
+        title: '💬 Москаленко М.Д. (Главный диспетчер)',
+        meta: 'Личный защищенный канал • Табельный № ТБ-04828',
+        messages: [
+          { author: 'Москаленко М.Д.', time: '09:00', text: 'Артем, привет! Смену передаю тебе, обрати особое внимание на ст. Коломенское, там утром был скачок обогрева стрелки №12. Задачу в журнал смен я уже оформил.', isOutgoing: false },
+          { author: 'Интулов А.А.', time: '09:02', text: 'Привет, Максим! Понял, сейчас зайду в форму передачи смен и подтвержу приём.', isOutgoing: true }
+        ]
+      },
+      kolomenskoye: {
+        title: '💬 Дежурный по ст. Коломенское',
+        meta: 'Прямой канал связи диспетчер — ДСП',
+        messages: [
+          { author: 'Дежурный ст. Коломенское', time: '09:10', text: 'Диспетчер, поезд №6004 приближается к входному светофору «Ч». Готовность пути подтверждаем.', isOutgoing: false },
+          { author: 'Интулов А.А.', time: '09:11', text: 'Принято. Прием на II путь, готовность стрелки №12 держи на контроле.', isOutgoing: true }
+        ]
+      },
+      train6004: {
+        title: '💬 Машинист поезда №6004',
+        meta: 'Поезд пригородный ЭР2К-980 • Москва — Домодедово',
+        messages: [
+          { author: 'Машинист поезда №6004', time: '09:15', text: 'Диспетчер, поезд №6004 на перегоне, входной ст. Коломенское открыт, зеленый. Нагон 2 минуты ликвидировали.', isOutgoing: false },
+          { author: 'Интулов А.А.', time: '09:16', text: 'Понял, №6004, следуйте по графику.', isOutgoing: true }
+        ]
+      },
+      power: {
+        title: '💬 ЭЧ-4 (Энергодиспетчер)',
+        meta: 'Тяговая подстанция Павелецкая',
+        messages: [
+          { author: 'ЭЧ-4', time: '08:50', text: 'Напряжение в контактной сети 3.3 кВ стабильно. Фидер №3 на резерве.', isOutgoing: false }
+        ]
+      }
+    };
+
+    let activeChatKey = 'general';
+
+    function renderMessages() {
+      const chat = chatData[activeChatKey];
+      if (!chat) return;
+
+      document.getElementById('chatTitle').innerText = chat.title;
+      document.getElementById('chatMeta').innerText = chat.meta;
+
+      const feed = document.getElementById('chatFeed');
+      feed.innerHTML = '';
+
+      chat.messages.forEach(m => {
+        if (m.isSystem) {
+          const sys = document.createElement('div');
+          sys.className = 'sys-msg-banner' + (m.isAlert ? ' alert' : '');
+          sys.innerHTML = m.text;
+          feed.appendChild(sys);
+        } else {
+          const row = document.createElement('div');
+          row.className = 'msg-row ' + (m.isOutgoing ? 'outgoing' : 'incoming');
+          row.innerHTML = `
+            <div class="msg-bubble">
+              <div class="msg-header">
+                <span class="msg-author">${m.author}</span>
+                <span class="msg-time">${m.time}</span>
+              </div>
+              <div class="msg-text">${m.text}</div>
+              <div class="msg-crypto-sign">🔒 Подписано ЭЦП ГОСТ</div>
+            </div>
+          `;
+          feed.appendChild(row);
+        }
+      });
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function selectChannel(key) {
+      activeChatKey = key;
+      document.querySelectorAll('#channelsNavList .nav-item, #dmNavList .nav-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      switchTab('chat');
+      renderMessages();
+      closeMobileSidebar();
+    }
+
+    function selectDM(key) {
+      activeChatKey = key;
+      document.querySelectorAll('#channelsNavList .nav-item, #dmNavList .nav-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      switchTab('chat');
+      renderMessages();
+      closeMobileSidebar();
+    }
+
+    function filterChannels(query) {
+      const q = query.toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(el => {
+        const text = el.innerText.toLowerCase();
+        el.style.display = text.includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.getElementById('viewChat').classList.remove('active');
+      document.getElementById('viewShift').classList.remove('active');
+      document.getElementById('viewQA').classList.remove('active');
+
+      document.getElementById('btnTabChat').classList.remove('active');
+      document.getElementById('btnTabShift').classList.remove('active');
+      document.getElementById('btnTabQA').classList.remove('active');
+
+      if (tabId === 'chat') {
+        document.getElementById('viewChat').classList.add('active');
+        document.getElementById('btnTabChat').classList.add('active');
+      } else if (tabId === 'shift') {
+        document.getElementById('viewShift').classList.add('active');
+        document.getElementById('btnTabShift').classList.add('active');
+      } else if (tabId === 'qa') {
+        document.getElementById('viewQA').classList.add('active');
+        document.getElementById('btnTabQA').classList.add('active');
+      }
+    }
+
+    // Role switcher
+    let isUserMoskalenko = false;
+    function toggleUserRole() {
+      isUserMoskalenko = !isUserMoskalenko;
+      if (isUserMoskalenko) {
+        document.getElementById('userNameText').innerText = 'Москаленко М.Д.';
+        document.getElementById('userRoleText').innerText = 'Главный диспетчер ▾';
+        document.getElementById('userAvatarText').innerText = 'ММ';
+      } else {
+        document.getElementById('userNameText').innerText = 'Интулов А.А.';
+        document.getElementById('userRoleText').innerText = 'Сменный диспетчер ▾';
+        document.getElementById('userAvatarText').innerText = 'АИ';
+      }
+    }
+
+    // Send Message
+    function sendChatMessage() {
+      const inp = document.getElementById('chatInput');
+      const text = inp.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      const author = isUserMoskalenko ? 'Москаленко М.Д. (Главный диспетчер)' : 'Интулов А.А. (Сменный диспетчер)';
+
+      chatData[activeChatKey].messages.push({
+        author: author,
+        time: timeStr,
+        text: text,
+        isOutgoing: true
+      });
+
+      renderMessages();
+      inp.value = '';
+    }
+
+    // Shift Handover Task Lifecycle
+    let task1State = 0; // 0 = Pending, 1 = Accepted, 2 = Done
+
+    function advanceTask1() {
+      const card = document.getElementById('taskCard1');
+      const badge = document.getElementById('t1Badge');
+      const audit = document.getElementById('t1Audit');
+      const btnContainer = document.getElementById('t1BtnContainer');
+
+      if (task1State === 0) {
+        task1State = 1;
+        card.className = 'task-card state-accepted';
+        card.setAttribute('data-status', 'accepted');
+        badge.className = 'badge badge-accepted';
+        badge.innerText = 'Принята в работу';
+
+        audit.innerHTML += `
+          <div class="audit-entry highlight">• 09:22:15 — Диспетчер Интулов А.А. (Смена Б) подтвердил приём смены и подписал ЭЦП</div>
+        `;
+
+        btnContainer.innerHTML = `
+          <button class="btn-action-caramel" onclick="advanceTask1()">✓ Зафиксировать выполнение</button>
+        `;
+        document.getElementById('navBadgeCount').style.display = 'none';
+        document.getElementById('journalCountBadge').innerText = '1 в работе / 1 закрытая';
+      } else if (task1State === 1) {
+        task1State = 2;
+        card.className = 'task-card state-done';
+        card.setAttribute('data-status', 'done');
+        badge.className = 'badge badge-done';
+        badge.innerText = 'Выполнена';
+
+        audit.innerHTML += `
+          <div class="audit-entry success">• 09:30:00 — Диспетчер Интулов А.А. выполнил: акт проверки обогрева получен от ДСП Коломенское, температура +4°C, стрелка исправна.</div>
+        `;
+
+        btnContainer.innerHTML = `<span style="font-size: 11px; color: #276E44; font-weight: 600;">✓ Выполнение заверено в ДУ-2</span>`;
+        document.getElementById('journalCountBadge').className = 'badge badge-done';
+        document.getElementById('journalCountBadge').innerText = 'Все задачи смены закрыты ✓';
+      }
+    }
+
+    function createShiftTask() {
+      const name = document.getElementById('inpTaskName').value.trim();
+      const action = document.getElementById('inpTaskAction').value.trim();
+      const sender = document.getElementById('inpShiftSender').value;
+      const receiver = document.getElementById('inpShiftReceiver').value;
+      const priority = document.getElementById('inpTaskPriority').value;
+
+      if (!name) {
+        alert('Укажите формулировку задачи.');
+        return;
+      }
+
+      const container = document.getElementById('tasksListContainer');
+      const card = document.createElement('div');
+      card.className = 'task-card state-pending';
+      card.setAttribute('data-status', 'pending');
+      card.innerHTML = `
+        <div class="task-header">
+          <div>
+            <span class="badge badge-pending" style="margin-bottom: 4px;">Ждёт приёма</span>
+            <div class="task-title">${name}</div>
+          </div>
+          <span style="font-size: 11px; color: var(--text-muted);">Приоритет: ${priority}</span>
+        </div>
+        <div class="task-action-box">
+          <strong>Действие:</strong> ${action}
+        </div>
+        <div class="task-meta">
+          <span>Передал: <strong>${sender.split(' ')[0]}</strong> ➔ Принимает: <strong>${receiver.split(' ')[0]}</strong></span>
+          <span>Только что</span>
+        </div>
+        <div class="audit-trail">
+          <div class="audit-entry">• 09:31:00 — Новое распоряжение зарегистрировано и подписано ЭЦП ГОСТ</div>
+        </div>
+        <div style="margin-top: 10px;">
+          <button class="btn-action-primary" onclick="this.parentElement.innerHTML='<span class=\\'badge badge-accepted\\'>Принята в работу</span>';">Подтвердить приём</button>
+        </div>
+      `;
+      container.insertBefore(card, container.firstChild);
+      alert('Сменное распоряжение успешно подписано ЭЦП и добавлено в реестр ДУ-2!');
+    }
+
+    function filterTaskCards(status, chip) {
+      document.querySelectorAll('.filter-chip').forEach(el => el.classList.remove('active'));
+      chip.classList.add('active');
+
+      document.querySelectorAll('#tasksListContainer .task-card').forEach(card => {
+        if (status === 'all') {
+          card.style.display = 'block';
+        } else {
+          card.style.display = card.getAttribute('data-status') === status ? 'block' : 'none';
+        }
+      });
+    }
+
+    function resetShiftDemo() {
+      task1State = 0;
+      const card = document.getElementById('taskCard1');
+      card.className = 'task-card state-pending';
+      card.setAttribute('data-status', 'pending');
+      document.getElementById('t1Badge').className = 'badge badge-pending';
+      document.getElementById('t1Badge').innerText = 'Ждёт приёма';
+      document.getElementById('t1Audit').innerHTML = '<div class="audit-entry">• 09:20:14 — Диспетчер Москаленко М.Д. передал задачу и подписал ЭЦП ГОСТ</div>';
+      document.getElementById('t1BtnContainer').innerHTML = '<button class="btn-action-primary" id="t1Btn" onclick="advanceTask1()">✓ Подтвердить приём смены</button>';
+      document.getElementById('navBadgeCount').style.display = 'inline-block';
+      document.getElementById('journalCountBadge').className = 'badge badge-accepted';
+      document.getElementById('journalCountBadge').innerText = '1 активная / 1 закрытая';
+    }
+
+    // Modals
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function submitIncident() {
+      const priority = document.getElementById('inpIncPriority').value;
+      const loc = document.getElementById('inpIncLocation').value;
+      const desc = document.getElementById('inpIncDesc').value;
+
+      chatData.incidents.messages.push({
+        isSystem: true,
+        isAlert: true,
+        text: `🚨 НОВЫЙ ИНЦИДЕНТ [${priority}]: ${loc}. ${desc} (Зарегистрировал: Интулов А.А.)`
+      });
+
+      closeModal('modalIncident');
+      selectChannel('incidents');
+      alert('Аварийное оповещение мгновенно разослано на все пульты дежурных в локальной сети!');
+    }
+
+    function submitRegistration() {
+      const name = document.getElementById('regFullName').value;
+      const role = document.getElementById('regRole').value;
+      closeModal('modalRegister');
+      alert(`Сотрудник ${name} (${role}) успешно зарегистрирован! Выпущен закрытый криптоконтейнер ГОСТ Р 34.10-2012.`);
+    }
+
+    function downloadActFile() {
+      const content = `АКТ ПРИЕМА-ПЕРЕДАЧИ СМЕНЫ ДЦУП (ФОРМА ДУ-2)
+Дата: 20.11.2026 09:30
+Участок: ст. Москва-Павелецкая — Бирюлёво-Пассажирская
+Сдал смену: Диспетчер Москаленко М.Д. (ТБ-04828)
+Принял смену: Диспетчер Интулов А.А. (ТБ-04829)
+Статус стрелки №12 ст. Коломенское: Исправна (+4°C), обогрев включен.
+Электронная цифровая подпись: ГОСТ Р 34.10-2012 валидна.`;
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Акт_передачи_смены_ДУ-2.txt';
+      a.click();
+    }
+
+    // Init
+    renderMessages();
+  </script>
+</body>
+</html>
